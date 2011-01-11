@@ -19,11 +19,26 @@ navigate to folder with music
 $ smug.py
 
 for party mode (shuffle songs)
-$ smug.py -r
+$ smug.py -s
+
 
 Keyboard Shortcuts:
 -------------------
 j/k, n/p - next/previous song
-r - jump to random song
+s/r - jump to random song
 spacebar - play/pause
+q/x - quit
 
+
+To-Do
+-----
+1. Recursively find files
+2. Song progress indicator with duration elapsed
+3. Intergrate 'say' command to announce songs
+4. Add comments :\
+
+
+License
+-------
+Do whatever you want with it.
++1 for stackoverflow and its awesome community

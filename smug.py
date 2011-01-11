@@ -12,8 +12,8 @@ if platform.system() != 'Darwin':
 
 parser=optparse.OptionParser()
 parser.add_option(
-  '-r','--random',
-  dest='randomplay',
+  '-s','--shuffle',
+  dest='shuffle',
   default=False,
   action="store_true",
   help='''Shuffle mode.'''
@@ -75,7 +75,7 @@ class Player:
         self.isPlaying = True
         self.playHistory.append(filename)
         self.statusString = "%d. %s - %s mins" % (len(self.playHistory), filename, self.getDuration(filename))
-        print "\r" + player.statusString + "\r"
+        print "\r%s\r" % player.statusString
         self.player = Popen("afplay \"%s\" -q 1" % filename, shell=True)
         self.playerPID = self.player.pid
     def stop(self):
@@ -123,7 +123,7 @@ class playerThread(threading.Thread):
         if (playlist.count()<=0):
             ch = 'q'
             exit()
-        if options.randomplay:
+        if options.shuffle:
             player.play(playlist.randomSong())
         else:
             player.play(playlist.firstSong())
@@ -141,9 +141,12 @@ class updaterThread(threading.Thread):
     def run(self):
         global ch
         while (ch!='q'):
-            time.sleep(1)
+            try:
+                time.sleep(1)
+            except:
+                pass
             if(player.trackFinished()):
-                if options.randomplay:
+                if options.shuffle:
                     player.play(playlist.randomSong())
                 else:
                     player.play(playlist.nextSong())
@@ -153,9 +156,9 @@ def playerControls(ch):
         player.play(playlist.nextSong())
     elif (ch=='p') or (ch=='k'):
         player.play(playlist.prevSong())
-    elif (ch=='r'):
+    elif (ch=='r') or (ch=='s'):
         player.play(playlist.randomSong())
-    elif (ch=='q'):
+    elif (ch=='q') or (ch=='x'):
         player.stop()
         exit()
     elif (ch==' '):
