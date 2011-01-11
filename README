@@ -18,9 +18,12 @@ Usage:
 navigate to folder with music
 $ smug.py
 
+for party mode (shuffle songs)
+$ smug.py -r
 
 Keyboard Shortcuts:
 -------------------
 j/k, n/p - next/previous song
 r - jump to random song
 spacebar - play/pause
+

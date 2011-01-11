@@ -1,6 +1,10 @@
 #!/usr/bin/env python
+#author Tejeshwar Sangam - tejeshwar.s@gmail.com
+#https://github.com/colorfulgrayscale/smug
+
 import os, sys, tty, termios, threading, time, optparse, random, platform
-from subprocess import *
+from subprocess import Popen, PIPE
+from datetime import timedelta, datetime
 
 if platform.system() != 'Darwin':
     print "This program works only on MacOS X"
@@ -61,14 +65,16 @@ class Player:
         self.player = -1
         self.statusString = ""
     def getDuration(self, filename):
-        command = "afinfo \"%s\"|awk 'NR==5'|tr -d '\n'|awk '{print $3/60}'" % filename
-        duration = Popen(command, shell=True, stdout=PIPE).stdout.readline().strip()
-        return round(float(duration),2)
+        command = "afinfo \"%s\"|awk 'NR==5'|tr -d '\n'|awk '{print $3}'" % filename
+        raw = Popen(command, shell=True, stdout=PIPE).stdout.readline().strip()
+        sec = timedelta(seconds=int(float(raw)))
+        duration = datetime(1,1,1) + sec
+        return("%d:%d" % (duration.minute, duration.second))
     def play(self,filename):
         self.stop()
         self.isPlaying = True
         self.playHistory.append(filename)
-        self.statusString = "%d. %s - %.2f mins" % (len(self.playHistory), filename, self.getDuration(filename))
+        self.statusString = "%d. %s - %s mins" % (len(self.playHistory), filename, self.getDuration(filename))
         print "\r" + player.statusString + "\r"
         self.player = Popen("afplay \"%s\" -q 1" % filename, shell=True)
         self.playerPID = self.player.pid
