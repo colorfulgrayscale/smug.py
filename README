@@ -25,15 +25,16 @@ $ smug.py -s
 Keyboard Shortcuts:
 -------------------
 j/k, n/p - next/previous song
-s/r - jump to random song
+s - jump to random song
+r - rewind song
 spacebar - play/pause
-q/x - quit
+q - quit
 
 
 To-Do
 -----
 1. Recursively find files
-2. Song progress indicator with duration elapsed
+2. Song status/progress indicator with du ration elapsed
 3. Intergrate 'say' command to announce songs
 4. Add comments :\
 

@@ -35,6 +35,8 @@ class Playlist:
             self.add(filename)
     def count(self):
         return len(self.playlist)
+    def currentSong(self):
+        return self.playlist[self.currentlyPlaying]
     def randomSong(self):
         self.currentlyPlaying = random.randrange(len(self.playlist))
         return self.playlist[self.currentlyPlaying]
@@ -63,7 +65,6 @@ class Player:
         self.isPlaying = False
         self.playerPID = -1
         self.player = -1
-        self.statusString = ""
     def getDuration(self, filename):
         command = "afinfo \"%s\"|awk 'NR==5'|tr -d '\n'|awk '{print $3}'" % filename
         raw = Popen(command, shell=True, stdout=PIPE).stdout.readline().strip()
@@ -71,11 +72,12 @@ class Player:
         duration = datetime(1,1,1) + sec
         return("%d:%d" % (duration.minute, duration.second))
     def play(self,filename):
+        #self.statusString = "%s mins" %  self.getDuration(filename))
+        print "\r%d. %s - " % (len(self.playHistory), filename),
+        print "%s mins \r" % self.getDuration(filename)
         self.stop()
         self.isPlaying = True
         self.playHistory.append(filename)
-        self.statusString = "%d. %s - %s mins" % (len(self.playHistory), filename, self.getDuration(filename))
-        print "\r%s\r" % player.statusString
         self.player = Popen("afplay \"%s\" -q 1" % filename, shell=True)
         self.playerPID = self.player.pid
     def stop(self):
@@ -117,7 +119,7 @@ player = Player()
 class playerThread(threading.Thread):
     def run(self):
         global ch
-        print "Searching folder for music files"
+        print "Searching folder for music files",
         playlist.addFolder(os.getcwd())
         print "Found %d music file(s).\n" % playlist.count()
         if (playlist.count()<=0):
@@ -135,7 +137,7 @@ class playerThread(threading.Thread):
                 ch = sys.stdin.read(1)
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            playerControls(ch)
+            playerControls()
 
 class updaterThread(threading.Thread):
     def run(self):
@@ -151,14 +153,18 @@ class updaterThread(threading.Thread):
                 else:
                     player.play(playlist.nextSong())
 
-def playerControls(ch):
+def playerControls():
+    global ch
     if (ch=='n') or (ch=='j'):
         player.play(playlist.nextSong())
     elif (ch=='p') or (ch=='k'):
         player.play(playlist.prevSong())
-    elif (ch=='r') or (ch=='s'):
+    elif (ch=='r'):
+        player.play(playlist.currentSong())
+    elif (ch=='s'):
         player.play(playlist.randomSong())
-    elif (ch=='q') or (ch=='x'):
+    elif (ch=='q'):
+        print "\nQuiting..."
         player.stop()
         exit()
     elif (ch==' '):
