@@ -18,21 +18,39 @@ parser.add_option(
   action="store_true",
   help='''Shuffle mode.'''
 )
+parser.add_option(
+  '-r','--recursive',
+  dest='recursive',
+  default=False,
+  action="store_true",
+  help='''Find music files recursively'''
+)
 options,args=parser.parse_args()
 ch = '~'
+
+class MusicFile:
+    def __init__(self, name=None, path=None):
+        self.name = name
+        self.path = path
+    def __str__(self):
+        return ("%s/%s" % (self.path, self.name))
 
 class Playlist:
     def __init__(self):
         self.playlist = list()
         self.currentlyPlaying = -1
         self.supportedFiles = ['.mp3', '.wav', '.flac','.aif']
-    def add(self, filename):
+    def add(self, filename, folder):
         basename, extension = os.path.splitext(filename)
         if extension in self.supportedFiles:
-            self.playlist.append(filename)
+            self.playlist.append(MusicFile(name=filename, path=folder))
     def addFolder(self, folder):
         for filename in os.listdir(folder):
-            self.add(filename)
+            self.add(filename,folder)
+    def addFolderRecursive(self,folder):
+        for root, subFolders, files in os.walk(folder):
+            for filename in files:
+                self.add(filename, root)
     def count(self):
         return len(self.playlist)
     def currentSong(self):
@@ -65,20 +83,19 @@ class Player:
         self.isPlaying = False
         self.playerPID = -1
         self.player = -1
-    def getDuration(self, filename):
-        command = "afinfo \"%s\"|awk 'NR==5'|tr -d '\n'|awk '{print $3}'" % filename
+    def getDuration(self, musicFile):
+        command = "afinfo \"%s\"|awk 'NR==5'|tr -d '\n'|awk '{print $3}'" % musicFile
         raw = Popen(command, shell=True, stdout=PIPE).stdout.readline().strip()
         sec = timedelta(seconds=int(float(raw)))
         duration = datetime(1,1,1) + sec
         return("%d:%d" % (duration.minute, duration.second))
-    def play(self,filename):
-        #self.statusString = "%s mins" %  self.getDuration(filename))
-        print "\r%d. %s - " % (len(self.playHistory), filename),
-        print "%s mins \r" % self.getDuration(filename)
+    def play(self,musicFile):
+        print "\r%d. %s - [fetching time...]" % (len(self.playHistory)+1, musicFile.name),
+        print "\r%d. %s - %s mins           " % (len(self.playHistory)+1, musicFile.name,self.getDuration(musicFile))
         self.stop()
         self.isPlaying = True
-        self.playHistory.append(filename)
-        self.player = Popen("afplay \"%s\" -q 1" % filename, shell=True)
+        self.playHistory.append(musicFile)
+        self.player = Popen("afplay \"%s\" -q 1" % musicFile, shell=True)
         self.playerPID = self.player.pid
     def stop(self):
         if(self.playerPID== -1) or (self.isPlaying==False):
@@ -119,8 +136,12 @@ player = Player()
 class playerThread(threading.Thread):
     def run(self):
         global ch
-        print "Searching folder for music files",
-        playlist.addFolder(os.getcwd())
+        if options.recursive:
+            print "Searching folder recursively for music files",
+            playlist.addFolderRecursive(os.getcwd())
+        else:
+            print "Searching folder for music files",
+            playlist.addFolder(os.getcwd())
         print "Found %d music file(s).\n" % playlist.count()
         if (playlist.count()<=0):
             ch = 'q'

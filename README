@@ -5,22 +5,22 @@ Simple console based music player for MacOS X
 smug acts as a thin wrapper around afplay and afinfo to play music. Since it
 uses core audio, its very lightweight and supports a variety of file formats.
 
-
 Installation:
 -------------
 1. make it executable: chmod +x smug.py
 2. add smug folder to your path: export PATH=${PATH}:`pwd`
     (alternatively put smug.py in your /bin)
 
-
 Usage:
 ------
 navigate to folder with music
 $ smug.py
 
+recursively find and play all music in folder
+$ smug.py -r
+
 for party mode (shuffle songs)
 $ smug.py -s
-
 
 Keyboard Shortcuts:
 -------------------
@@ -30,14 +30,11 @@ r - rewind song
 spacebar - play/pause
 q - quit
 
-
 To-Do
 -----
-1. Recursively find files
-2. Song status/progress indicator with du ration elapsed
-3. Intergrate 'say' command to announce songs
-4. Add comments :\
-
+1. Song status/progress indicator with duration elapsed
+2. Intergrate 'say' command to announce songs
+3. Add comments :\
 
 License
 -------
