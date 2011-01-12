@@ -72,8 +72,7 @@ class Playlist:
         if(searchIndex!=-1):
             self.currentlyPlaying = searchIndex
             return self.playlist[self.currentlyPlaying]
-        else:
-            return -1
+        return -1
     def randomSong(self):
         self.currentlyPlaying = random.randrange(len(self.playlist))
         return self.playlist[self.currentlyPlaying]
