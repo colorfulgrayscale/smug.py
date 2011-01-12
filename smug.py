@@ -91,7 +91,7 @@ class Player:
         return("%d:%d" % (duration.minute, duration.second))
     def play(self,musicFile):
         print "\r%d. %s - [fetching time...]" % (len(self.playHistory)+1, musicFile.name),
-        print "\r%d. %s - %s mins           " % (len(self.playHistory)+1, musicFile.name,self.getDuration(musicFile))
+        print "\r%d. %s - %s mins             \n" % (len(self.playHistory)+1, musicFile.name,self.getDuration(musicFile)),
         self.stop()
         self.isPlaying = True
         self.playHistory.append(musicFile)
