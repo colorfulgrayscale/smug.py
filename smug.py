@@ -91,7 +91,7 @@ class Player:
         return("%d:%d" % (duration.minute, duration.second))
     def play(self,musicFile):
         print "\r%d. %s - [fetching time...]" % (len(self.playHistory)+1, musicFile.name),
-        print "\r%d. %s - %s mins             \n" % (len(self.playHistory)+1, musicFile.name,self.getDuration(musicFile)),
+        print "\r%d. %s - %s mins %20s\n" % (len(self.playHistory)+1, musicFile.name,self.getDuration(musicFile),''),
         self.stop()
         self.isPlaying = True
         self.playHistory.append(musicFile)
@@ -108,11 +108,13 @@ class Player:
     def pause(self):
         if(self.playerPID==-1) or (self.isPlaying==False):
             return
+        print "\r[Paused]",
         Popen("kill -STOP %d " % self.playerPID, shell=True)
         self.isPlaying = False
     def resume(self):
         if(self.playerPID==-1) or (self.isPlaying==True):
             return
+        print "\r%10s\r"%'',
         Popen("kill -CONT %d" % self.playerPID, shell=True)
         self.isPlaying = True
     def togglePlayPause(self):
