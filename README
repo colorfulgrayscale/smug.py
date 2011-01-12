@@ -27,7 +27,8 @@ Keyboard Shortcuts:
 j/k, n/p - next/previous song
 s - jump to random song
 r - rewind song
-spacebar - play/pause
+l - toggle loop song
+spacebar - toggle play/pause
 q - quit
 
 To-Do

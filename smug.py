@@ -2,6 +2,7 @@
 #author Tejeshwar Sangam - tejeshwar.s@gmail.com
 #https://github.com/colorfulgrayscale/smug
 
+print "Searching for music files",
 import os, sys, tty, termios, threading, time, optparse, random, platform
 from subprocess import Popen, PIPE
 from datetime import timedelta, datetime
@@ -40,6 +41,8 @@ class Playlist:
         self.playlist = list()
         self.currentlyPlaying = -1
         self.supportedFiles = ['.mp3', '.wav', '.flac','.aif']
+        self.random = False
+        self.repeat = False
     def add(self, filename, folder):
         basename, extension = os.path.splitext(filename)
         if extension in self.supportedFiles:
@@ -67,15 +70,32 @@ class Playlist:
             self.currentlyPlaying = len(self.playlist) - 1
             return self.playlist[-1]
     def nextSong(self):
+        if self.repeat:
+            return self.currentSong()
+        if self.random:
+            return self.randomSong()
         if (self.currentlyPlaying+1) > (len(self.playlist)-1) :
             return self.firstSong()
         self.currentlyPlaying = self.currentlyPlaying + 1
         return self.playlist[self.currentlyPlaying]
     def prevSong(self):
+        if self.repeat:
+            return self.currentSong()
+        if self.random:
+            return self.randomSong()
         if (self.currentlyPlaying-1 < 0):
             return self.lastSong()
         self.currentlyPlaying = self.currentlyPlaying - 1
         return self.playlist[self.currentlyPlaying]
+    def toggleRepeat(self):
+        if self.repeat:
+            print "X. [Stop Looping Track %s]"%self.currentSong().name
+            self.repeat = False
+        else:
+            print "X. [Start Looping Track %s]"%self.currentSong().name
+            self.repeat = True
+
+playlist = Playlist()
 
 class Player:
     def __init__(self):
@@ -90,8 +110,14 @@ class Player:
         duration = datetime(1,1,1) + sec
         return("%d:%d" % (duration.minute, duration.second))
     def play(self,musicFile):
+        if ch == 'q':
+            return
         print "\r%d. %s - [fetching time...]" % (len(self.playHistory)+1, musicFile.name),
-        print "\r%d. %s - %s mins %20s\n" % (len(self.playHistory)+1, musicFile.name,self.getDuration(musicFile),''),
+        print "\r%d. %s - %s mins %5s" % (len(self.playHistory)+1, musicFile.name,self.getDuration(musicFile),''),
+        if playlist.repeat:
+            print "[Looping]%20s\r\n"%'',
+        else:
+            print "%20s\r\n"%'',
         self.stop()
         self.isPlaying = True
         self.playHistory.append(musicFile)
@@ -108,13 +134,13 @@ class Player:
     def pause(self):
         if(self.playerPID==-1) or (self.isPlaying==False):
             return
-        print "\r[Paused]",
+        print "\r  [Paused]%20s\r"%'',
         Popen("kill -STOP %d " % self.playerPID, shell=True)
         self.isPlaying = False
     def resume(self):
         if(self.playerPID==-1) or (self.isPlaying==True):
             return
-        print "\r%10s\r"%'',
+        print "\r%20s\r"%'',
         Popen("kill -CONT %d" % self.playerPID, shell=True)
         self.isPlaying = True
     def togglePlayPause(self):
@@ -132,38 +158,34 @@ class Player:
         else:
             return False
 
-playlist = Playlist()
 player = Player()
 
+fd = sys.stdin.fileno()
+old_settings = termios.tcgetattr(fd)
 class playerThread(threading.Thread):
     def run(self):
         global ch
+        playlist.random = options.shuffle
         if options.recursive:
-            print "Searching folder recursively for music files",
             playlist.addFolderRecursive(os.getcwd())
         else:
-            print "Searching folder for music files",
             playlist.addFolder(os.getcwd())
         print "Found %d music file(s).\n" % playlist.count()
         if (playlist.count()<=0):
             ch = 'q'
             exit()
-        if options.shuffle:
-            player.play(playlist.randomSong())
-        else:
-            player.play(playlist.firstSong())
+        updaterThread().start()
         while (ch!='q') :
-            fd = sys.stdin.fileno()
-            old_settings = termios.tcgetattr(fd)
             try:
                 tty.setraw(sys.stdin.fileno())
                 ch = sys.stdin.read(1)
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            playerControls()
+            playerControls(ch)
 
 class updaterThread(threading.Thread):
     def run(self):
+        player.play(playlist.nextSong())
         global ch
         while (ch!='q'):
             try:
@@ -171,13 +193,9 @@ class updaterThread(threading.Thread):
             except:
                 pass
             if(player.trackFinished()):
-                if options.shuffle:
-                    player.play(playlist.randomSong())
-                else:
-                    player.play(playlist.nextSong())
+                player.play(playlist.nextSong())
 
-def playerControls():
-    global ch
+def playerControls(ch):
     if (ch=='n') or (ch=='j'):
         player.play(playlist.nextSong())
     elif (ch=='p') or (ch=='k'):
@@ -186,6 +204,8 @@ def playerControls():
         player.play(playlist.currentSong())
     elif (ch=='s'):
         player.play(playlist.randomSong())
+    elif (ch=='l'):
+        playlist.toggleRepeat()
     elif (ch=='q'):
         print "\nQuiting..."
         player.stop()
@@ -195,4 +215,3 @@ def playerControls():
 
 if __name__ == '__main__':
     playerThread().start()
-    updaterThread().start()
