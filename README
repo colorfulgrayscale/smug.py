@@ -2,7 +2,7 @@ smug.py 0.1
 --------
 Simple console based music player for MacOS X
 
-smug acts as a thin wrapper around afplay and afinfo to play music. Since it
+smug acts as a wrapper around afplay and afinfo to play music. Since it
 uses core audio, its very lightweight and supports a variety of file formats.
 
 Installation:
@@ -28,6 +28,7 @@ j/k, n/p - next/previous song
 s - jump to random song
 r - rewind song
 l - toggle loop song
+/ - jump to song (fuzzy search)
 spacebar - toggle play/pause
 q - quit
 

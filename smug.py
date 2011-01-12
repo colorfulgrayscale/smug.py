@@ -3,7 +3,7 @@
 #https://github.com/colorfulgrayscale/smug
 
 print "Searching for music files",
-import os, sys, tty, termios, threading, time, optparse, random, platform
+import os, sys, tty, termios, threading, time, optparse, random, platform, difflib
 from subprocess import Popen, PIPE
 from datetime import timedelta, datetime
 
@@ -28,6 +28,7 @@ parser.add_option(
 )
 options,args=parser.parse_args()
 ch = '~'
+autoPlayNextTrack=True
 
 class MusicFile:
     def __init__(self, name=None, path=None):
@@ -39,8 +40,9 @@ class MusicFile:
 class Playlist:
     def __init__(self):
         self.playlist = list()
+        self.randomHistory = list()
         self.currentlyPlaying = -1
-        self.supportedFiles = ['.mp3', '.wav', '.flac','.aif']
+        self.supportedFiles = ['.mp3', '.wav','.aif','.m4a']
         self.random = False
         self.repeat = False
     def add(self, filename, folder):
@@ -58,6 +60,20 @@ class Playlist:
         return len(self.playlist)
     def currentSong(self):
         return self.playlist[self.currentlyPlaying]
+    def findSong(self, song):
+        searchIndex = -1
+        highestMatchRatio = -1
+        thresholdRatio = 0.2
+        for (counter, files) in enumerate(self.playlist):
+            temp = difflib.SequenceMatcher(None, files.name, song).ratio()
+            if (temp > highestMatchRatio) and (temp > thresholdRatio):
+                searchIndex = counter
+                highestMatchRatio = temp
+        if(searchIndex!=-1):
+            self.currentlyPlaying = searchIndex
+            return self.playlist[self.currentlyPlaying]
+        else:
+            return -1
     def randomSong(self):
         self.currentlyPlaying = random.randrange(len(self.playlist))
         return self.playlist[self.currentlyPlaying]
@@ -73,7 +89,9 @@ class Playlist:
         if self.repeat:
             return self.currentSong()
         if self.random:
-            return self.randomSong()
+            song = self.randomSong()
+            playlist.randomHistory.append(song)
+            return song
         if (self.currentlyPlaying+1) > (len(self.playlist)-1) :
             return self.firstSong()
         self.currentlyPlaying = self.currentlyPlaying + 1
@@ -82,7 +100,14 @@ class Playlist:
         if self.repeat:
             return self.currentSong()
         if self.random:
-            return self.randomSong()
+            if len(self.randomHistory) <=1:
+                return self.randomHistory[0]
+            else:
+                song = self.randomHistory.pop()
+                if "%s"%song == "%s"%self.currentSong():
+                    return self.randomHistory.pop()
+                else:
+                    return song
         if (self.currentlyPlaying-1 < 0):
             return self.lastSong()
         self.currentlyPlaying = self.currentlyPlaying - 1
@@ -99,10 +124,10 @@ playlist = Playlist()
 
 class Player:
     def __init__(self):
-        self.playHistory = list()
         self.isPlaying = False
         self.playerPID = -1
         self.player = -1
+        self.playCounter = 0
     def getDuration(self, musicFile):
         command = "afinfo \"%s\"|awk 'NR==5'|tr -d '\n'|awk '{print $3}'" % musicFile
         raw = Popen(command, shell=True, stdout=PIPE).stdout.readline().strip()
@@ -112,15 +137,15 @@ class Player:
     def play(self,musicFile):
         if ch == 'q':
             return
-        print "\r%d. %s - [fetching time...]" % (len(self.playHistory)+1, musicFile.name),
-        print "\r%d. %s - %s mins %5s" % (len(self.playHistory)+1, musicFile.name,self.getDuration(musicFile),''),
+        self.playCounter = self.playCounter + 1
+        print "\r%d. %s - [fetching time...]" % (self.playCounter, musicFile.name),
+        print "\r%d. %s - %s mins" % (self.playCounter,  musicFile.name,self.getDuration(musicFile)),
         if playlist.repeat:
             print "[Looping]%20s\r\n"%'',
         else:
             print "%20s\r\n"%'',
         self.stop()
         self.isPlaying = True
-        self.playHistory.append(musicFile)
         self.player = Popen("afplay \"%s\" -q 1" % musicFile, shell=True)
         self.playerPID = self.player.pid
     def stop(self):
@@ -160,8 +185,6 @@ class Player:
 
 player = Player()
 
-fd = sys.stdin.fileno()
-old_settings = termios.tcgetattr(fd)
 class playerThread(threading.Thread):
     def run(self):
         global ch
@@ -175,27 +198,32 @@ class playerThread(threading.Thread):
             ch = 'q'
             exit()
         updaterThread().start()
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
         while (ch!='q') :
             try:
                 tty.setraw(sys.stdin.fileno())
                 ch = sys.stdin.read(1)
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            playerControls(ch)
+            playerControls()
 
 class updaterThread(threading.Thread):
     def run(self):
         player.play(playlist.nextSong())
         global ch
+        global autoPlayNextTrack
         while (ch!='q'):
             try:
                 time.sleep(1)
             except:
                 pass
-            if(player.trackFinished()):
+            if(player.trackFinished() and autoPlayNextTrack):
                 player.play(playlist.nextSong())
 
-def playerControls(ch):
+def playerControls():
+    global ch
+    global autoPlayNextTrack
     if (ch=='n') or (ch=='j'):
         player.play(playlist.nextSong())
     elif (ch=='p') or (ch=='k'):
@@ -206,6 +234,16 @@ def playerControls(ch):
         player.play(playlist.randomSong())
     elif (ch=='l'):
         playlist.toggleRepeat()
+    elif (ch=='/'):
+        autoPlayNextTrack=False
+        print "\r%30s\r"%'',
+        foo = raw_input("X. Jump to song: ")
+        song = playlist.findSong(foo)
+        if(song == -1):
+            print "\r  [Song Not Found!]%20s\r"%'',
+        else:
+            player.play(song)
+        autoPlayNextTrack=True
     elif (ch=='q'):
         print "\nQuiting..."
         player.stop()
