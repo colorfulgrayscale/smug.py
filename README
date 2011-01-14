@@ -10,14 +10,16 @@ Installation:
 -------------
 1. make it executable: chmod +x smug.py
 2. add smug folder to your path: export PATH=${PATH}:`pwd`
-    (alternatively put smug.py in your /bin)
+    (alternatively, put smug.py in your /bin)
 
 Usage:
 ------
-navigate to folder with music
+syntax: smug.py [file/folder] --shuffle --recursive
+
+navigate to folder with music and type
 $ smug.py
 
-recursively find and play all music in folder
+to recursively find and play all music in folder
 $ smug.py -r
 
 for party mode (shuffle songs)
@@ -29,15 +31,18 @@ j/k, n/p - next/previous song
 s - jump to random song
 r - rewind song
 l - toggle loop song
-/ - jump to song (levenstein based search)
-spacebar - toggle play/pause
+i - print playlist
+/ - jump to song (levenshtein based search)
+    (alternatively, enter the playlist number of song)
+spacebar - toggle mute
 q - quit
 
 To-Do
 -----
 1. Song progress indicator with duration elapsed
 2. Intergrate 'say' command to announce songs
-3. Add comments :\
+3. Grown notifications
+4. Add comments :\
 
 License
 -------
