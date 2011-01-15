@@ -125,19 +125,23 @@ class Playlist:
         return self.playlist[self.currentlyPlaying]
     def toggleRepeat(self):
         if self.repeat:
-            print "X. [Single Track Looping Disabled]"
+            print "\033[0;31mX. [Single Track Looping Disabled]\033[0m"
             self.repeat = False
         else:
-            print "X. [Single Track Looping Enabled]"
+            print "\033[0;31mX. [Single Track Looping Enabled]\033[0m"
             self.repeat = True
     def __str__(self):
-        print "\nPlaylist had %d file(s)"%len(self.playlist)
+        print "\033[0;32m\nPlaylist had %d file(s)"%len(self.playlist)
         print '-'*50
+        print "\033[0m",
         for (counter, files) in enumerate(self.playlist):
             if counter == self.currentlyPlaying:
-                print "-> ",
-            print "%d. %s "%(counter+1, files.name)
+                print "\033[0;31m-> %d. %s \033[0m"%(counter+1, files.name)
+            else:
+                print "%d. %s "%(counter+1, files.name)
+        print "\033[0;32m",
         print '-'*50
+        print "\033[0m",
         return ""
 
 playlist = Playlist()
@@ -159,12 +163,12 @@ class Player:
         if ch == 'q':
             return
         self.playCounter = self.playCounter + 1
-        print "\r%d. %s - [fetching time...]" % (self.playCounter, musicFile.name),
+        print "\r%d. %s -\033[0;31m [fetching time...]\033[0m" % (self.playCounter, musicFile.name),
         self.stop()
         self.isPlaying = True
         self.player = Popen("afplay \"%s\" -q 1" % musicFile, shell=True)
         self.playerPID = self.player.pid
-        self.currentSong = "\r%d. %s - %s mins" % (self.playCounter,  musicFile.name,self.getDuration(musicFile))
+        self.currentSong = "\r%d. %s - \033[1m%s mins\033[0m" % (self.playCounter,  musicFile.name,self.getDuration(musicFile))
         if playlist.repeat:
             self.currentSong = "%s %s"%(self.currentSong, "[Looping]%20s\r"%'')
         else:
@@ -181,7 +185,7 @@ class Player:
     def pause(self):
         if(self.playerPID==-1) or (self.isPlaying==False):
             return
-        print "\r  [Muted]%20s\r"%'',
+        print "\033[0;31m\r  [Muted]%20s\r\033[0m"%'',
         Popen("kill -STOP %d " % self.playerPID, shell=True)
         self.isPlaying = False
     def resume(self):
@@ -217,7 +221,7 @@ class playerThread(threading.Thread):
                 exit()
         else:
             playlist.addFolder(os.getcwd())
-        print "Found %d music file(s).\n" % playlist.count()
+        print "Found %d music file(s).\n\033[0m" % playlist.count()
         if (playlist.count()<=0):
             ch = 'q'
             exit()
@@ -260,16 +264,18 @@ def playerControls():
         print "%s\n%s"%(playlist,player.currentSong)
     elif (ch=='/'):
         autoPlayNextTrack=False
-        print "\r%30s\r"%'',
+        print "\033[0;31m\r%30s\r"%'',
         foo = raw_input("X. Jump to song: ")
         song = playlist.findSong(foo)
         if(song == -1):
             print "\r  [Song Not Found!]%20s\r"%'',
+            print "\033[0m",
         else:
+            print "\033[0m",
             player.play(song)
         autoPlayNextTrack=True
     elif (ch=='q'):
-        print "\nQuiting..."
+        print "\033[0;31m\nQuiting...\033[0m"
         player.stop()
         exit()
     elif (ch==' '):
