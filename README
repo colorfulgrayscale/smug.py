@@ -1,4 +1,4 @@
-smug.py 0.1
+smug.py 0.2
 -----------
 Simple yet robust console based music player for MacOS X
 
@@ -32,6 +32,8 @@ s - jump to random song
 r - rewind song
 l - toggle loop song
 i - print playlist
+m - print full path of current file
+t - makes a note (file path of current file) to '~/Music/smug_notes.txt'
 / - jump to song (levenshtein based search)
     (alternatively, enter the playlist number of song)
 spacebar - toggle mute
@@ -39,6 +41,8 @@ q - quit
 
 To-Do
 -----
+
+0. Tests: it should survive loading `python3.6/site-packages/scipy/io/tests/data` without crashing
 1. Song progress indicator with duration elapsed
 2. Intergrate 'say' command to announce songs
 3. Growl notifications
